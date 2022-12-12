@@ -1,0 +1,55 @@
+version: '3.4'
+
+services:
+  transcomm_backend:
+    build:
+      context: ./
+      dockerfile: ./docker/transcomm-backend/Dockerfile.m1
+      args:
+        DATABASE_URL: 'mysql://config_api:en4DQKqs@20.198.93.196:3316/pfi_dev'
+    ports:
+      - '3030:3030'
+    restart: always
+    environment:
+      KAFKA_TOPIC_CUSTOMS: 'DHL-EXP-TRANSCOM-TOPIC'
+      KAFKA_TOPIC_PICKUPS_MOVEMENTS: 'TOPIC-IM-TRANSCOMM-DXB'
+      KAFKA_TOPIC_BLESS_COMMON_APP_OUTPUT: 'BlessAckTopic'
+      KAFKA_BROKERS: '13.235.249.33:9092'
+      KAFKA_GROUP_ID: 'transcomm-backend'
+      BLESS_NEW_ORDER_MESSAGE_TYPE: 'TC_DHLE_CORD'
+      BLESS_CONFIRM_RETURN_DELIVERY_MESSAGE_TYPE: 'TC_DHLE_RDEL'
+      BLESS_HYPERLEDGER_MESSAGE_TYPES: 'TC_DHLE_CORD_ODAT,  TC_DHLE_CORD_IDAT,  TC_DHLE_CORD_ODAT'
+      BLESS_NEW_PICKUP_MESSAGE_TYPE: 'TC_DHLE_CUR_STA'
+      BLESS_NEW_MASTER_MOVEMENT_MESSAGE_TYPE: 'TC_DHLE_MANF'
+      BLESS_NEW_DETAIl_MOVEMENT_MESSAGE_TYPE: 'TC_DHLE_HAWB'
+      BLESS_DECLARATION_REQUEST_EXPORT_MESSAGE_TYPE: 'TC_DHLE_ODAT_EXC_EXPORT'
+      BLESS_DECLARATION_REQUEST_IMPORT_MESSAGE_TYPE: 'TC_DHLE_ODAT_EXC_IMPORT'
+      BLESS_DECLARATION_RESPONSE_EXPORT_MESSAGE_TYPE: 'TC_DHLE_ODAT_EXC_EXPORT'
+      BLESS_DECLARATION_RESPONSE_IMPORT_MESSAGE_TYPE: 'TC_DHLE_ODAT_EXC_IMPORT'
+      EVENTSTORE_CONNECTION_STRING: 'esdb://db_eventstore:2113?tls=false'
+      AUTO_RETRIES_INTERVAL: '1,1,2,2,5'
+      AUTO_RETRIES: '5'
+      SUPERADMIN_EMAIL: 'super@admin.com'
+      SUPERADMIN_HASHED_PASSWORD: 'Prasad@1924'
+      LOGGING_LEVEL: '[\"error\", \"warn\", \"log\", \"debug\"]'
+   #   BUSINESS_EXCEPTION_MSG_TYPE: 'ROR'
+   #   DATAGEN_KAFKA_SENDER_IDENTITY: 'DC-TC'
+   #   DATAGEN_KAFKA_RECEIVERS: 'DHL-EXP'
+   #   DATAGEN_KAFKA_EXCEPTION_MESSAGE_TYPE: 'TC_DHLE_ODAT_EXC'
+   #   DATAGEN_KAFKA_EXCEPTION_RECEIVERS:  'DHL-EXP,LUXC_DXB'
+   #   DATAGEN_APPLICATION_ID: "DC-TC"
+   #   DATAGEN_KAFKA_AUDIENCE: 'DHL-EXP'
+   #   DATAGEN_ACTIVE: 'true'
+    depends_on:
+      - transcomm_backend_migration
+    volumes:
+      -     volumes:
+      - type: volume
+        source: realtrace_generic_api
+        target: /home/node/app
+  transcomm_backend_migration:
+    build:
+      context: ./
+      dockerfile: ./docker/transcomm-backend/database-migration/Dockerfile.m1
+      args:
+        DATABASE_URL: 'mysql://config_api:en4DQKqs@20.198.93.196:3316/pfi_dev'
